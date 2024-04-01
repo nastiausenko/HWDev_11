@@ -34,6 +34,7 @@ public class TimeServlet extends HttpServlet {
         resolver.setCacheable(false);
         engine.addTemplateResolver(resolver);
     }
+    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("text/html; charset=utf-8");
@@ -45,6 +46,7 @@ public class TimeServlet extends HttpServlet {
         engine.process("index", context, resp.getWriter());
         resp.getWriter().close();
     }
+    
     private String parseTime(HttpServletRequest req, HttpServletResponse resp) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
         ZonedDateTime zonedDateTime;
@@ -56,7 +58,6 @@ public class TimeServlet extends HttpServlet {
         } else {
             zonedDateTime = getLastTimezone(req);
         }
-
         return zonedDateTime.format(dateFormat);
     }
 
