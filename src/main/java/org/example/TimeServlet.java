@@ -4,16 +4,45 @@ import java.io.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 @WebServlet(value = "/time")
 public class TimeServlet extends HttpServlet {
+    private TemplateEngine engine;
+
+    @Override
+    public void init() throws ServletException {
+        engine = new TemplateEngine();
+
+        ServletContext context = getServletContext();
+        String prefix = context.getRealPath("/WEB-INF/templates/");
+
+        FileTemplateResolver resolver = new FileTemplateResolver();
+        resolver.setPrefix(prefix);
+        resolver.setSuffix(".html");
+        resolver.setTemplateMode("HTML5");
+        resolver.setOrder(engine.getTemplateResolvers().size());
+        resolver.setCharacterEncoding("UTF-8");
+        resolver.setCacheable(false);
+        engine.addTemplateResolver(resolver);
+    }
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("text/html; charset=utf-8");
-        resp.getWriter().write(parseTime(req));
+        Context context = new Context(
+                req.getLocale(),
+                Map.of("time", parseTime(req))
+        );
+
+        engine.process("index", context, resp.getWriter());
         resp.getWriter().close();
     }
     private String parseTime(HttpServletRequest req) {
@@ -27,13 +56,6 @@ public class TimeServlet extends HttpServlet {
             zonedDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
         }
 
-        String formattedDate = zonedDateTime.format(dateFormat);
-
-        return "<html>\n" +
-               "<head><title>Current Time</title></head>\n" +
-               "<body>\n" +
-               "<h1>Current Time</h1>\n" +
-               "<p>" + formattedDate + "</p>\n" +
-               "</body></html>";
+        return zonedDateTime.format(dateFormat);
     }
 }
